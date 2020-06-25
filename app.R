@@ -117,20 +117,20 @@ serv_calc <- list()
 #make data frame 1
 serv_calc[[1]] <- function(calc, sess){
   
-  #save input as a data frame
-  indv_values <- reactive({
-    tibble(code = input$code,
-           platform = input$platform,
-           gender = input$gender,
-           race = input$race,
-           ethnicity = input$ethnicity,
-           age = input$age,
-           timestamp = Sys.time())
-    
-  })
-  
   # this is going to activate any time I press "submit"
   observeEvent(calc$submit, {
+    
+    #save input as a data frame
+    indv_values <- reactive({
+      tibble(code = calc$code,
+             platform = calc$platform,
+             gender = calc$gender,
+             race = calc$race,
+             ethnicity = calc$ethnicity,
+             age = calc$age,
+             timestamp = Sys.time())
+      
+    })
     
     #first add data to the google sheet
     sheet_append(ss2, data = indv_values())
@@ -161,7 +161,7 @@ serv_out[["group_plot"]] <- function(calc, sess){
     # we add this check to make sure our plot doesn't try to render before we've ever pressed "Build!"
     if (!is.null(calc$plot.df)){
       # build plot
-      ggplot(df, mapping = aes(x = timestamp, y = csum)) + geom_line() + facet_wrap(~code)
+      ggplot(calc$plot.df, mapping = aes(x = timestamp, y = csum)) + geom_line() + facet_wrap(~code)
     }
   })
 }
@@ -171,7 +171,7 @@ serv_out[["lb_table"]] <- function(calc, sess){
     # we add this check to make sure our plot doesn't try to render before we've ever pressed "Build!"
     if (!is.null(calc$sum.df)){
       # build table
-      sum_table
+      calc$sum.df
     }
   })
 }
