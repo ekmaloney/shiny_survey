@@ -46,31 +46,17 @@ df <- tibble(code = sample(1:4, 1000, replace=TRUE),
 ss2 <- gs4_create("Shiny Data Collaboration Challenge",
                   sheets = df)
 
-# named list of ui pages that are the contain the title and content of each of my windows
-ui_win <- list()
 
-#consent page
-
-ui_win[['Consent']] <- fluidPage(
+# Define UI for survey app ----
+ui <- pageWithSidebar(
   
-  #title of page 
-  titlePanel("Consent to Participate"),
+  # App title ----
+  headerPanel("Mobilization Challenge"),
   
-  #put the consent text in the main panel
-  mainPanel(textInput("consent", 
-                      "<INSERT CONSENT TO PARTICIPATE TEXT> If you consent to participate in this study, type your name here:",
-                      "enter your name"),
-            actionButton("Agree to Participate", "consent_submit"))
-  
-)
-
-#survey page
-ui_win[['Survey']] <- fluidPage(
-  titlePanel("Mobilization Challenge: Survey"),
-  
-  sidebarPanel(),
-  
-  mainPanel(#Input 1: code 
+  # Sidebar panel for inputs ----
+  sidebarPanel(
+    
+    #Input 1: code 
     textInput("code", 
               "Enter the code assigned to the person who alerted you to this challenge.",
               value = 0),
@@ -102,20 +88,18 @@ ui_win[['Survey']] <- fluidPage(
                  value = 20,
                  min = 0, max = 100, step = 1),
     
-    actionButton("submit", "Submit"))
+    actionButton("submit", "Submit")
+  ),
+  
+  # Main panel for displaying outputs ----
+  mainPanel(
+    plotOutput("group_plot"),
+    tableOutput("all_values")
+  )
 )
 
-ui_win[['Leaderboard']] <- fluidPage(
-  titlePanel("Leaderboard"),
-  plotOutput("group_plot"),
-  tableOutput("lb_table")
-)
-
-# setting up the list of calculations I want to do
-serv_calc <- list()
-
-#make data frame 1
-serv_calc[[1]] <- function(calc, sess){
+# Define server logic to plot various variables against mpg ----
+server <- function(input, output) {
   
   #save input as a data frame
   indv_values <- reactive({
@@ -129,52 +113,28 @@ serv_calc[[1]] <- function(calc, sess){
     
   })
   
-  # this is going to activate any time I press "submit"
-  observeEvent(calc$submit, {
-    
-    #first add data to the google sheet
+  #first add data to the google sheet
+  observeEvent(input$submit, {           
     sheet_append(ss2, data = indv_values())
     
-    #bring down all of the data 
     df <- read_sheet(ss2)
-    
-    #calculate the cumulative sum needed for plots
     df <- df %>% 
       group_by(code) %>% 
       mutate(n = 1,
              csum = cumsum(n))
     
-    #calculate the grouped sums for leaderboard
     sum_table <- df %>% count(code)
     
-    
-    # add this to calc, since we want to use this in our rendering
-    calc[["plot.df"]] <- df
-    calc[["sum.df"]] <- sum_table
-  })
-}
-
-serv_out <- list()
-
-serv_out[["group_plot"]] <- function(calc, sess){
-  renderPlot({
-    # we add this check to make sure our plot doesn't try to render before we've ever pressed "Build!"
-    if (!is.null(calc$plot.df)){
-      # build plot
-      ggplot(df, mapping = aes(x = timestamp, y = csum)) + geom_line() + facet_wrap(~code)
-    }
-  })
-}
-
-serv_out[["lb_table"]] <- function(calc, sess){
-  renderTable({
-    # we add this check to make sure our plot doesn't try to render before we've ever pressed "Build!"
-    if (!is.null(calc$sum.df)){
-      # build table
+    output$all_values <- renderTable({
       sum_table
-    }
-  })
+    })
+    
+    output$group_plot <- renderPlot({
+      ggplot(df, mapping = aes(x = timestamp, y = csum)) + geom_line() + facet_wrap(~code)
+    })
+    
+  }
+  )
 }
 
-
-mwsApp(ui_win, serv_calc, serv_out)
+shinyApp(ui, server)
