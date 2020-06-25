@@ -6,6 +6,7 @@ library(googlesheets4)
 library(tidyverse)
 library(DT)
 library(lubridate)
+library(shinyjs)
 
 #get your token to access google drive
 options(httr_oob_default = TRUE)
@@ -51,58 +52,52 @@ ui_win <- list()
 
 #consent page
 
-ui_win[['Consent']] <- fluidPage(
+ui_win[['Survey']] <- fluidPage(
   
   #title of page 
   titlePanel("Consent to Participate"),
-  
+  useShinyjs(),
   #put the consent text in the main panel
-  mainPanel(textInput("consent", 
+  sidebarPanel(textInput("consent", 
                       "<INSERT CONSENT TO PARTICIPATE TEXT> If you consent to participate in this study, type your name here:",
                       "enter your name"),
-            actionButton("Agree to Participate", "consent_submit"))
-  
-)
-
-#survey page
-ui_win[['Survey']] <- fluidPage(
-  titlePanel("Mobilization Challenge: Survey"),
-  
-  sidebarPanel(),
-  
-  mainPanel(#Input 1: code 
-    textInput("code", 
-              "Enter the code assigned to the person who alerted you to this challenge.",
-              value = 0),
-    
-    #Input 2: Platform
-    selectInput("platform", 
-                "On which social media platform did you find out about this challenge?",
-                choices = c("Facebook", "Instagram", "Twitter", "TikTok")),
-    
-    #Input 3: Gender
-    checkboxGroupInput("gender",
-                       "What gender do you identify as? (select all that apply)",
-                       choices = c("Man", "Woman", "Transgender", "Nonbinary", "Other")),
-    
-    #Input 4: Race
-    checkboxGroupInput("race", 
-                       "What race are you? (select all that apply)",
-                       choices = c("White", "Black", "Asian", "American Indian or Alaska Native",
-                                   "Native Hawaiian or Other Pacific Islander", "Other")),
-    
-    #Input 5: Ethnicity
-    checkboxGroupInput("ethnicity",
-                       "What is your ethnicity?",
-                       choices = c("Hispanic/Latino", "Not Hispanic or Latino")),
-    
-    #Input 6: Age
-    numericInput("age",
-                 "How old are you?",
-                 value = 20,
-                 min = 0, max = 100, step = 1),
-    
-    actionButton("submit", "Submit"))
+            actionButton("consent_submit", "Agree to Participate")),
+  div(id = "main",
+      mainPanel(
+        #Input 1: code 
+        textInput("code", 
+                  "Enter the code assigned to the person who alerted you to this challenge.",
+                  value = 0),
+        
+        #Input 2: Platform
+        selectInput("platform", 
+                    "On which social media platform did you find out about this challenge?",
+                    choices = c("Facebook", "Instagram", "Twitter", "TikTok")),
+        
+        #Input 3: Gender
+        checkboxGroupInput("gender",
+                           "What gender do you identify as? (select all that apply)",
+                           choices = c("Man", "Woman", "Transgender", "Nonbinary", "Other")),
+        
+        #Input 4: Race
+        checkboxGroupInput("race", 
+                           "What race are you? (select all that apply)",
+                           choices = c("White", "Black", "Asian", "American Indian or Alaska Native",
+                                       "Native Hawaiian or Other Pacific Islander", "Other")),
+        
+        #Input 5: Ethnicity
+        checkboxGroupInput("ethnicity",
+                           "What is your ethnicity?",
+                           choices = c("Hispanic/Latino", "Not Hispanic or Latino")),
+        
+        #Input 6: Age
+        numericInput("age",
+                     "How old are you?",
+                     value = 20,
+                     min = 0, max = 100, step = 1),
+        
+        actionButton("submit", "Submit"))
+      ) %>% shinyjs::hidden()
 )
 
 ui_win[['Leaderboard']] <- fluidPage(
@@ -114,8 +109,16 @@ ui_win[['Leaderboard']] <- fluidPage(
 # setting up the list of calculations I want to do
 serv_calc <- list()
 
-#make data frame 1
-serv_calc[[1]] <- function(calc, sess){
+serv_calc[[1]] <- function(calc, sess) {
+  
+#this activates when consent is submitted
+  observeEvent(calc$consent_submit, {
+    shinyjs::toggle("main")
+  })
+}
+
+#make data frames
+serv_calc[[2]] <- function(calc, sess){
   
   # this is going to activate any time I press "submit"
   observeEvent(calc$submit, {
