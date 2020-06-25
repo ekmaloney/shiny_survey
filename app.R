@@ -10,10 +10,9 @@ library(shinyjs)
 
 #get your token to access google drive
 options(httr_oob_default = TRUE)
-shiny_token <- sheets_auth(email = "emily.maloney24@gmail.com")
-shiny_token <- "4/1QEqKINqTBdcwg3GaX9pPwBQOzQ_TuPjf7or6Gj3tR-uxTelCQuoaqI"
-saveRDS(shiny_token, "shiny_app_token.rds")
+sheets_auth(email = "dukesiccs@gmail.com")
 
+#making sample data
 pfs <- c("Facebook", "Instagram", "Twitter", "TikTok")
 g <- c("Man", "Woman", "Transgender", "Nonbinary", "Other")
 r <- c("White", "Black", "Asian", "American Indian or Alaska Native",
@@ -121,7 +120,7 @@ serv_calc[[1]] <- function(calc, sess) {
 serv_calc[[2]] <- function(calc, sess){
   
   #bring down all of the data 
-  df <- read_sheet(ss2)
+  df <- read_sheet("https://docs.google.com/spreadsheets/d/1sGg5zr1hdH7FnI4YY5aEajZ0rveAbleucjUu72Me9_s/edit")
   
   #calculate the cumulative sum needed for plots
   df <- df %>% 
