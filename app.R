@@ -120,6 +120,23 @@ serv_calc[[1]] <- function(calc, sess) {
 #make data frames
 serv_calc[[2]] <- function(calc, sess){
   
+  #bring down all of the data 
+  df <- read_sheet(ss2)
+  
+  #calculate the cumulative sum needed for plots
+  df <- df %>% 
+    group_by(code) %>% 
+    mutate(n = 1,
+           csum = cumsum(n))
+  
+  #calculate the grouped sums for leaderboard
+  sum_table <- df %>% count(code)
+  
+  
+  # add this to calc, since we want to use this in our rendering
+  calc[["plot.df"]] <- df
+  calc[["sum.df"]] <- sum_table
+  
   # this is going to activate any time I press "submit"
   observeEvent(calc$submit, {
     
